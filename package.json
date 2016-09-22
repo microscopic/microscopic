@@ -1,0 +1,36 @@
+{
+  "name": "microscopic",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "lint": "standard",
+    "test": "istanbul cover _mocha test/ -- --recursive"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.0.2",
+    "mockery": "^1.7.0",
+    "sinon": "^1.17.5",
+    "standard": "^8.0.0"
+  },
+  "standard": {
+    "globals": [
+      "after",
+      "afterEach",
+      "before",
+      "beforeEach",
+      "describe",
+      "it"
+    ]
+  },
+  "dependencies": {
+    "microscopic-etcd-registry": "microscopic/microscopic-etcd-registry",
+    "microscopic-utils": "microscopic/microscopic-utils",
+    "microscopic-transport": "microscopic/microscopic-transport",
+    "microscopic-load-balancer": "microscopic/microscopic-load-balancer"
+  }
+}
