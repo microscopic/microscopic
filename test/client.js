@@ -12,8 +12,10 @@ const Transport = require('microscopic-transport')
 
 describe('Client', () => {
   let serviceNode = {
-    transport: {
-      type: 'test-transport'
+    options: {
+      transport: {
+        type: 'test-transport'
+      }
     }
   }
 
@@ -92,9 +94,11 @@ describe('Client', () => {
 
     it('should send request to first node if transport has disabled loadbalancing', () => {
       serviceNode = {
-        transport: {
-          type: 'test-transport',
-          loadbalancing: false
+        options: {
+          transport: {
+            type: 'test-transport',
+            loadbalancing: false
+          }
         }
       }
 
@@ -110,9 +114,11 @@ describe('Client', () => {
 
     it('should send request to first node if not set loadbalancer type', () => {
       serviceNode = {
-        loadbalancer: '',
-        transport: {
-          type: 'test-transport'
+        options: {
+          loadbalancer: '',
+          transport: {
+            type: 'test-transport'
+          }
         }
       }
 
@@ -136,9 +142,11 @@ describe('Client', () => {
       mockery.registerMock('test-load-balancer', TestLoadBalancer)
 
       serviceNode = {
-        loadbalancer: 'test-load-balancer',
-        transport: {
-          type: 'test-transport'
+        options: {
+          loadbalancer: 'test-load-balancer',
+          transport: {
+            type: 'test-transport'
+          }
         }
       }
 
