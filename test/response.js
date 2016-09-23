@@ -106,4 +106,23 @@ describe('Response', () => {
       expect(() => response.response({ ok: 2 })).to.throw(Error)
     })
   })
+
+  describe('timeout()', () => {
+    it('should set timeout status', () => {
+      const response = new Response(new Request(serviceMock, {}), () => null)
+
+      response.timeout()
+
+      expect(response.status).to.be.equal(Response.STATUS.TIMEOUT)
+    })
+
+    it('should send response', () => {
+      const sendResponseSpy = sinon.spy()
+      const response = new Response(new Request(serviceMock, {}), sendResponseSpy)
+
+      response.timeout()
+
+      expect(sendResponseSpy.calledWith(null, response)).to.be.true
+    })
+  })
 })

@@ -58,7 +58,7 @@ describe('Service', () => {
       const method = { run: sinon.spy() }
       sinon.stub(service, 'getMethod').returns(method)
 
-      const message = { name: 'test', version: 'v1' }
+      const message = { content: { name: 'test', version: 'v1' } }
 
       service.onMessage(message)
 
@@ -71,7 +71,7 @@ describe('Service', () => {
       const method = { run: sinon.spy() }
       sinon.stub(service, 'getMethod').returns(method)
 
-      const message = { name: 'test', version: 'v1' }
+      const message = { content: { name: 'test', version: 'v1' } }
       const sendResponse = () => 1
 
       service.onMessage(message, sendResponse)

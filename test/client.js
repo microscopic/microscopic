@@ -7,20 +7,19 @@ const sinon = require('sinon')
 const expect = chai.expect
 
 const Client = require('./../lib/client')
+const Response = require('../lib/response')
 const LoadBalancer = require('microscopic-load-balancer')
 const Transport = require('microscopic-transport')
 
 describe('Client', () => {
-  let serviceOptions = {
-    transport: {
-      type: 'test-transport'
-    }
-  }
-
+  let serviceOptions
   let nodes = [ { connection: '127.0.0.1' } ]
 
   let microscopicMock
   let sendSpy
+
+  let callbackError
+  let callbackResponse
 
   before(() => mockery.enable({
     warnOnReplace: false,
@@ -28,6 +27,12 @@ describe('Client', () => {
   }))
 
   beforeEach(() => {
+    serviceOptions = {
+      transport: {
+        type: 'test-transport'
+      }
+    }
+
     sendSpy = sinon.spy()
 
     microscopicMock = {
@@ -37,6 +42,9 @@ describe('Client', () => {
       }
     }
 
+    callbackError = null
+    callbackResponse = null
+
     class TestTransport extends Transport {
       listen () {
       }
@@ -44,7 +52,7 @@ describe('Client', () => {
       send (connectionConfig, msg, callback) {
         sendSpy(connectionConfig, msg, callback)
 
-        callback(null, {})
+        callback(callbackError, callbackResponse)
       }
     }
 
@@ -88,6 +96,8 @@ describe('Client', () => {
         id: client.id
       })
       expect(args[ 1 ].info.sent).to.be.within(start, Date.now())
+      expect(args[ 1 ]._callback).to.be.undefined
+      expect(args[ 1 ]._timeout).to.be.undefined
     })
 
     it('should send request to first node if transport has disabled loadbalancing', () => {
@@ -136,10 +146,10 @@ describe('Client', () => {
       mockery.registerMock('test-load-balancer', TestLoadBalancer)
 
       serviceOptions = {
-          loadbalancer: 'test-load-balancer',
-          transport: {
-            type: 'test-transport'
-          }
+        loadbalancer: 'test-load-balancer',
+        transport: {
+          type: 'test-transport'
+        }
       }
 
       const client = new Client(microscopicMock, 'test')
@@ -157,6 +167,117 @@ describe('Client', () => {
 
       const client = new Client(microscopicMock, 'test')
       expect(() => client.send('test', {}, () => null)).to.throw()
+    })
+
+    it('should call callback with response', (done) => {
+      callbackResponse = { status: Response.STATUS.SUCCESS, result: 1 }
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1 }, (error, response) => {
+        expect(error).to.be.null
+        expect(response).to.be.deep.equal(callbackResponse)
+
+        done()
+      })
+    })
+
+    it('should call callback with error', (done) => {
+      callbackError = new Error('ERROR')
+      callbackResponse = { status: Response.STATUS.SUCCESS, result: 1 }
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1 }, (error) => {
+        expect(error).to.be.instanceOf(Error)
+        expect(error).to.be.equal(callbackError)
+
+        done()
+      })
+    })
+
+    it('should call callback with error if response has error', (done) => {
+      const err = new Error('ERROR')
+      callbackResponse = { error: err, status: Response.STATUS.FAIL, result: 1 }
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1 }, (error) => {
+        expect(error).to.be.instanceOf(Error)
+
+        done()
+      })
+    })
+
+    it('should call callback with error if unknown error', (done) => {
+      callbackResponse = { status: Response.STATUS.FAIL, result: 1 }
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1 }, (error) => {
+        expect(error).to.be.instanceOf(Error)
+        expect(error.message).to.be.equal('Unknown error')
+
+        done()
+      })
+    })
+
+    it('should call callback with timeout error', (done) => {
+      callbackResponse = { status: Response.STATUS.TIMEOUT, result: 1 }
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1 }, (error, response) => {
+        expect(error).to.be.instanceOf(Error)
+        expect(error.message).to.be.equal('Request timeout!')
+        expect(response).to.be.a('object')
+
+        done()
+      })
+    })
+
+    it('should call callback after timeout', (done) => {
+      class TestTransport extends Transport {
+        listen () {
+        }
+
+        send (connectionConfig, msg, callback) {
+        }
+      }
+
+      mockery.registerMock('test-transport', TestTransport)
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1, timeout: 10 }, (error, response) => {
+        expect(error).to.be.instanceOf(Error)
+        expect(error.message).to.be.equal('Request timeout!')
+        expect(response).to.be.undefined
+
+        done()
+      })
+    })
+
+    it('should call callback once after timeout', (done) => {
+      class TestTransport extends Transport {
+        listen () {
+        }
+
+        send (connectionConfig, msg, callback) {
+          setTimeout(() => callback(null, 123), 50)
+        }
+      }
+
+      mockery.registerMock('test-transport', TestTransport)
+
+      const client = new Client(microscopicMock, 'test')
+
+      client.send('test', { a: 1, timeout: 10 }, (error, response) => {
+        expect(error).to.be.instanceOf(Error)
+        expect(response).to.be.undefined
+
+        done()
+      })
     })
   })
 })

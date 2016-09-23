@@ -66,5 +66,21 @@ describe('Method', () => {
 
       expect(definition.handler.called).to.be.false
     })
+
+    it('should not call and call `response.timeout` if request is expired', () => {
+      const request = {
+        isExpired: true
+      }
+
+      const response = {
+        createReply: () => null,
+        timeout: sinon.spy()
+      }
+
+      method.run(request, response)
+
+      expect(response.timeout.calledOnce).to.be.true
+      expect(definition.handler.called).to.be.false
+    })
   })
 })

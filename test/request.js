@@ -1,6 +1,8 @@
 'use strict'
 
 const chai = require('chai')
+const sinon = require('sinon')
+
 const expect = chai.expect
 
 const Request = require('../lib/request')
@@ -8,7 +10,50 @@ const Response = require('../lib/response')
 
 describe('Request', () => {
   describe('constructor()', () => {
-    // TODO
+    it('should set timeout', (done) => {
+      const request = new Request(
+        { name: 'test', id: '123' }, {
+          timeout: 10, info: { sent: Date.now() }
+        })
+
+      request.response = {
+        timeout: sinon.spy()
+      }
+
+      setTimeout(() => {
+        expect(request.response.timeout.called).to.be.true
+
+        done()
+      }, 100)
+    })
+  })
+
+  describe('get isExpired()', () => {
+    it('should return true if request is expired', (done) => {
+      const request = new Request(
+        { name: 'test', id: '123' }, {
+          timeout: 10, info: { sent: Date.now() }
+        })
+
+      setTimeout(() => {
+        expect(request.isExpired).to.be.true
+
+        done()
+      }, 20)
+    })
+
+    it('should return false if request is not expired', (done) => {
+      const request = new Request(
+        { name: 'test', id: '123' }, {
+          timeout: 100, info: { sent: Date.now() }
+        })
+
+      setTimeout(() => {
+        expect(request.isExpired).to.be.false
+
+        done()
+      }, 20)
+    })
   })
 
   describe('createResponse()', () => {
