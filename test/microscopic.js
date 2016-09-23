@@ -20,7 +20,7 @@ describe('Microscopic', () => {
 
   describe('createClient()', () => {
     it('should return Client', () => {
-      const microscopic = new Microscopic({ registry: { getServiceNode: () => ({}) } })
+      const microscopic = new Microscopic({ registry: { getServiceOptions: () => ({}) } })
 
       const client = microscopic.createClient('test')
 

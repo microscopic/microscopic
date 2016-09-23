@@ -11,11 +11,9 @@ const LoadBalancer = require('microscopic-load-balancer')
 const Transport = require('microscopic-transport')
 
 describe('Client', () => {
-  let serviceNode = {
-    options: {
-      transport: {
-        type: 'test-transport'
-      }
+  let serviceOptions = {
+    transport: {
+      type: 'test-transport'
     }
   }
 
@@ -35,7 +33,7 @@ describe('Client', () => {
     microscopicMock = {
       serviceRegistry: {
         getService: () => nodes,
-        getServiceNode: () => serviceNode
+        getServiceOptions: () => serviceOptions
       }
     }
 
@@ -93,12 +91,10 @@ describe('Client', () => {
     })
 
     it('should send request to first node if transport has disabled loadbalancing', () => {
-      serviceNode = {
-        options: {
-          transport: {
-            type: 'test-transport',
-            loadbalancing: false
-          }
+      serviceOptions = {
+        transport: {
+          type: 'test-transport',
+          loadbalancing: false
         }
       }
 
@@ -113,12 +109,10 @@ describe('Client', () => {
     })
 
     it('should send request to first node if not set loadbalancer type', () => {
-      serviceNode = {
-        options: {
-          loadbalancer: '',
-          transport: {
-            type: 'test-transport'
-          }
+      serviceOptions = {
+        loadbalancer: '',
+        transport: {
+          type: 'test-transport'
         }
       }
 
@@ -141,13 +135,11 @@ describe('Client', () => {
 
       mockery.registerMock('test-load-balancer', TestLoadBalancer)
 
-      serviceNode = {
-        options: {
+      serviceOptions = {
           loadbalancer: 'test-load-balancer',
           transport: {
             type: 'test-transport'
           }
-        }
       }
 
       const client = new Client(microscopicMock, 'test')
@@ -159,7 +151,7 @@ describe('Client', () => {
     })
 
     it('should throw error if does not set transport', () => {
-      serviceNode = {}
+      serviceOptions = {}
 
       nodes = [ { connection: '1' }, { connection: '2' } ]
 
