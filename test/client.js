@@ -94,9 +94,7 @@ describe('Client', () => {
       expect(args[ 1 ].params).to.be.deep.equal({ a: 1, b: 2 })
       expect(args[ 1 ].timeout).to.be.deep.equal(10000)
       expect(args[ 1 ].headers).to.be.a('object')
-      expect(args[ 1 ].info.client).to.be.deep.equal({
-        id: client.id
-      })
+      expect(args[ 1 ].info.client).to.have.all.keys([ 'id', 'ip' ])
       expect(args[ 1 ].info.sent).to.be.within(start, Date.now())
       expect(args[ 1 ]._callback).to.be.undefined
       expect(args[ 1 ]._timeout).to.be.undefined

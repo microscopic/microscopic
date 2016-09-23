@@ -10,6 +10,16 @@ const Response = require('../lib/response')
 
 describe('Request', () => {
   describe('constructor()', () => {
+    it('should set info data', () => {
+      const request = new Request(
+        { name: 'test', id: '123' }, {
+          timeout: 10, info: { sent: Date.now() }
+        })
+
+      expect(request.info).to.have.all.keys([ 'received', 'service', 'sent' ])
+      expect(request.info.service).to.have.all.keys([ 'name', 'id', 'ip' ])
+    })
+
     it('should set timeout', (done) => {
       const request = new Request(
         { name: 'test', id: '123' }, {
