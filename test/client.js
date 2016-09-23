@@ -92,6 +92,8 @@ describe('Client', () => {
 
       expect(args[ 1 ].method).to.be.equal('test')
       expect(args[ 1 ].params).to.be.deep.equal({ a: 1, b: 2 })
+      expect(args[ 1 ].timeout).to.be.deep.equal(10000)
+      expect(args[ 1 ].headers).to.be.a('object')
       expect(args[ 1 ].info.client).to.be.deep.equal({
         id: client.id
       })
@@ -278,6 +280,15 @@ describe('Client', () => {
 
         done()
       })
+    })
+
+    it('should send request with headers', () => {
+      const client = new Client(microscopicMock, 'test')
+      client.send('test', { headers: { 'x-test': 123, 'x-test-1': 1 } }, () => null)
+
+      const args = sendSpy.args[ 0 ]
+
+      expect(args[ 1 ].headers).to.be.deep.equal({ 'x-test': 123, 'x-test-1': 1 })
     })
   })
 })
