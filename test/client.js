@@ -37,7 +37,7 @@ describe('Client', () => {
 
     microscopicMock = {
       serviceRegistry: {
-        getService: () => nodes,
+        getService: () => Promise.resolve(nodes),
         getServiceOptions: () => Promise.resolve(serviceOptions)
       }
     }
