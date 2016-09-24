@@ -166,7 +166,7 @@ describe('Client', () => {
       const client = new Client(microscopicMock, 'test')
       client.send('test', {}, () => {
         const args = sendSpy.args[ 0 ]
-        
+
         expect(args[ 0 ]).to.be.equal('load-balancer')
 
         done()
