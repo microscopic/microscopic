@@ -38,12 +38,14 @@ describe('Client', () => {
     microscopicMock = {
       serviceRegistry: {
         getService: () => nodes,
-        getServiceOptions: () => serviceOptions
+        getServiceOptions: () => Promise.resolve(serviceOptions)
       }
     }
 
     callbackError = null
-    callbackResponse = null
+    callbackResponse = {
+      status: Response.STATUS.SUCCESS
+    }
 
     class TestTransport extends Transport {
       listen () {
@@ -82,25 +84,30 @@ describe('Client', () => {
   })
 
   describe('send()', () => {
-    it('should send correct form of request', () => {
+    it('should send correct form of request', (done) => {
       const start = Date.now()
 
       const client = new Client(microscopicMock, 'test')
-      client.send('test', { params: { a: 1, b: 2 } }, () => null)
 
-      const args = sendSpy.args[ 0 ]
+      setTimeout(() => {
+        client.send('test', { params: { a: 1, b: 2 } }, () => {
+          const args = sendSpy.args[ 0 ]
 
-      expect(args[ 1 ].method).to.be.equal('test')
-      expect(args[ 1 ].params).to.be.deep.equal({ a: 1, b: 2 })
-      expect(args[ 1 ].timeout).to.be.deep.equal(10000)
-      expect(args[ 1 ].headers).to.be.a('object')
-      expect(args[ 1 ].info.client).to.have.all.keys([ 'id', 'ip' ])
-      expect(args[ 1 ].info.sent).to.be.within(start, Date.now())
-      expect(args[ 1 ]._callback).to.be.undefined
-      expect(args[ 1 ]._timeout).to.be.undefined
+          expect(args[ 1 ].method).to.be.equal('test')
+          expect(args[ 1 ].params).to.be.deep.equal({ a: 1, b: 2 })
+          expect(args[ 1 ].timeout).to.be.deep.equal(10000)
+          expect(args[ 1 ].headers).to.be.a('object')
+          expect(args[ 1 ].info.client).to.have.all.keys([ 'id', 'ip' ])
+          expect(args[ 1 ].info.sent).to.be.within(start, Date.now())
+          expect(args[ 1 ]._callback).to.be.undefined
+          expect(args[ 1 ]._timeout).to.be.undefined
+
+          done()
+        })
+      }, 50)
     })
 
-    it('should send request to first node if transport has disabled loadbalancing', () => {
+    it('should send request to first node if transport has disabled loadbalancing', (done) => {
       serviceOptions = {
         transport: {
           type: 'test-transport',
@@ -111,14 +118,16 @@ describe('Client', () => {
       nodes = [ { connection: '1' }, { connection: '2' } ]
 
       const client = new Client(microscopicMock, 'test')
-      client.send('test', {}, () => null)
+      client.send('test', {}, () => {
+        const args = sendSpy.args[ 0 ]
 
-      const args = sendSpy.args[ 0 ]
+        expect(args[ 0 ]).to.be.equal(nodes[ 0 ].connection)
 
-      expect(args[ 0 ]).to.be.equal(nodes[ 0 ].connection)
+        done()
+      })
     })
 
-    it('should send request to first node if not set loadbalancer type', () => {
+    it('should send request to first node if not set loadbalancer type', (done) => {
       serviceOptions = {
         loadbalancer: '',
         transport: {
@@ -129,14 +138,16 @@ describe('Client', () => {
       nodes = [ { connection: '1' }, { connection: '2' } ]
 
       const client = new Client(microscopicMock, 'test')
-      client.send('test', {}, () => null)
+      client.send('test', {}, () => {
+        const args = sendSpy.args[ 0 ]
 
-      const args = sendSpy.args[ 0 ]
+        expect(args[ 0 ]).to.be.equal(nodes[ 0 ].connection)
 
-      expect(args[ 0 ]).to.be.equal(nodes[ 0 ].connection)
+        done()
+      })
     })
 
-    it('should send request to selected node by loadbalancer', () => {
+    it('should send request to selected node by loadbalancer', (done) => {
       class TestLoadBalancer extends LoadBalancer {
         balance () {
           return { connection: 'load-balancer' }
@@ -153,20 +164,15 @@ describe('Client', () => {
       }
 
       const client = new Client(microscopicMock, 'test')
-      client.send('test', {}, () => null)
+      client.send('test', {}, () => {
+        const args = sendSpy.args[ 0 ]
 
-      const args = sendSpy.args[ 0 ]
+        console.log(args)
 
-      expect(args[ 0 ]).to.be.equal('load-balancer')
-    })
+        expect(args[ 0 ]).to.be.equal('load-balancer')
 
-    it('should throw error if does not set transport', () => {
-      serviceOptions = {}
-
-      nodes = [ { connection: '1' }, { connection: '2' } ]
-
-      const client = new Client(microscopicMock, 'test')
-      expect(() => client.send('test', {}, () => null)).to.throw()
+        done()
+      })
     })
 
     it('should call callback with response', (done) => {
@@ -280,13 +286,15 @@ describe('Client', () => {
       })
     })
 
-    it('should send request with headers', () => {
+    it('should send request with headers', (done) => {
       const client = new Client(microscopicMock, 'test')
-      client.send('test', { headers: { 'x-test': 123, 'x-test-1': 1 } }, () => null)
+      client.send('test', { headers: { 'x-test': 123, 'x-test-1': 1 } }, () => {
+        const args = sendSpy.args[ 0 ]
 
-      const args = sendSpy.args[ 0 ]
+        expect(args[ 1 ].headers).to.be.deep.equal({ 'x-test': 123, 'x-test-1': 1 })
 
-      expect(args[ 1 ].headers).to.be.deep.equal({ 'x-test': 123, 'x-test-1': 1 })
+        done()
+      })
     })
   })
 })
