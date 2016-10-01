@@ -6,7 +6,6 @@ const sinon = require('sinon')
 const expect = chai.expect
 
 const Method = require('../lib/method')
-const Response = require('../lib/response')
 
 describe('Method', () => {
   describe('constructor()', () => {
@@ -50,41 +49,12 @@ describe('Method', () => {
     })
 
     it('should call handler', () => {
-      method.run({}, { createReply: () => null })
+      method.run({}, () => null)
 
       expect(definition.handler.called).to.be.true
     })
 
-    it('should create reply and inject to handler', () => {
-      const reply = () => null
-      method.run({}, { createReply: () => reply })
-
-      expect(definition.handler.calledWith({}, reply)).to.be.true
-    })
-
-    it('should not call handler if response sent', () => {
-      method.run({}, { isResponded: true, createReply: () => null })
-
-      expect(definition.handler.called).to.be.false
-    })
-
-    it('should not call and call `response.timeout` if request is expired', () => {
-      const request = {
-        isExpired: true
-      }
-
-      const response = {
-        createReply: () => null,
-        timeout: sinon.spy()
-      }
-
-      method.run(request, response)
-
-      expect(response.timeout.calledOnce).to.be.true
-      expect(definition.handler.called).to.be.false
-    })
-
-    it('should catch error from handler and send error response', () => {
+    it('should catch error from handler and return error response', () => {
       const error = new TypeError('Test Test')
 
       definition = {
@@ -94,19 +64,14 @@ describe('Method', () => {
         }
       }
 
-      const responseSpy = sinon.spy()
-      const response = {
-        response: responseSpy,
-        createReply: () => responseSpy
-      }
-
+      const replySpy = sinon.spy()
       const method = new Method(definition)
-      method.run({}, response)
+      method.run({}, replySpy)
 
-      expect(response.response.calledWith(error)).to.be.true
+      expect(replySpy.calledWith(error)).to.be.true
     })
 
-    it('should catch error from promise handler and send error response', () => {
+    it('should catch error from promise handler and return error response', () => {
       const error = new TypeError('Test Test')
 
       definition = {
@@ -114,37 +79,11 @@ describe('Method', () => {
         handler: Promise.reject(error)
       }
 
-      const responseSpy = sinon.spy()
-      const response = {
-        response: responseSpy,
-        createReply: () => responseSpy
-      }
-
+      const replySpy = sinon.spy()
       const method = new Method(definition)
-      method.run({}, response)
+      method.run({}, replySpy)
 
-      expect(response.response.calledWith(error)).to.be.true
-    })
-
-    it('should catch error from handler and not send error response if response was sent', () => {
-      const error = new TypeError('Test Test')
-
-      definition = {
-        name: 'name',
-        handler: (request, reply) => {
-          reply('ok')
-
-          throw error
-        }
-      }
-
-      const sendSpy = sinon.spy()
-      const response = new Response({ info: {} }, sendSpy)
-
-      const method = new Method(definition)
-      method.run({}, response)
-
-      expect(sendSpy.calledOnce).to.be.true
+      expect(replySpy.calledWith(error)).to.be.true
     })
   })
 })

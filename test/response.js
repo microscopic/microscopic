@@ -22,30 +22,21 @@ describe('Response', () => {
         }
       })
 
-      const response = new Response(request, () => null)
+      const response = new Response(request)
       expect(response.isResponded).to.be.true
     })
 
     it('should return false if response was not sent', () => {
       const request = new Request(serviceMock, {})
 
-      const response = new Response(request, () => null)
+      const response = new Response(request)
       expect(response.isResponded).to.be.false
-    })
-  })
-
-  describe('createReply()', () => {
-    it('should return function', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
-      const reply = response.createReply()
-
-      expect(reply).to.be.a('function')
     })
   })
 
   describe('response()', () => {
     it('should set success status', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
+      const response = new Response(new Request(serviceMock, {}))
 
       response.response({ ok: 1 })
 
@@ -53,35 +44,15 @@ describe('Response', () => {
     })
 
     it('should set success result', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
+      const response = new Response(new Request(serviceMock, {}))
 
       response.response({ ok: 1 })
 
       expect(response.result).to.be.deep.equal({ ok: 1 })
     })
 
-    it('should send response', () => {
-      const sendResponseSpy = sinon.spy()
-      const response = new Response(new Request(serviceMock, {}), sendResponseSpy)
-
-      response.response({ ok: 1 })
-
-      expect(sendResponseSpy.calledWith(null, response)).to.be.true
-    })
-
-    it('should set responded time', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
-      expect(response.request.info.responded).to.be.undefined
-
-      const start = Date.now()
-
-      response.response({ ok: 1 })
-
-      expect(response.request.info.responded).to.be.within(start, Date.now())
-    })
-
     it('should set error status', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
+      const response = new Response(new Request(serviceMock, {}))
 
       response.response(new Error('test'))
 
@@ -89,40 +60,49 @@ describe('Response', () => {
     })
 
     it('should set error result', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
+      const response = new Response(new Request(serviceMock, {}))
 
       const error = new Error('test test')
       error.data = { test: 1, test1: 2 }
 
       response.response(error)
 
-      expect(response.error).to.be.deep.equal({ message: 'test test', details: { test: 1, test1: 2 } })
-    })
-
-    it('should throw error if response called wtice', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
-      response.response({ ok: 1 })
-
-      expect(() => response.response({ ok: 2 })).to.throw(Error)
+      expect(response.error).to.be.equal(error)
     })
   })
 
   describe('timeout()', () => {
     it('should set timeout status', () => {
-      const response = new Response(new Request(serviceMock, {}), () => null)
+      const response = new Response(new Request(serviceMock, {}))
 
       response.timeout()
 
       expect(response.status).to.be.equal(Response.STATUS.TIMEOUT)
     })
 
-    it('should send response', () => {
-      const sendResponseSpy = sinon.spy()
-      const response = new Response(new Request(serviceMock, {}), sendResponseSpy)
+    it('should set error', () => {
+      const response = new Response(new Request(serviceMock, {}))
 
       response.timeout()
 
-      expect(sendResponseSpy.calledWith(null, response)).to.be.true
+      expect(response.error.message).to.be.equal('Timeout')
+    })
+  })
+
+  describe('toJSON()', () => {
+    it('should return copy of response', () => {
+      const response = new Response(new Request({ name: 'test', id: '123' }, { method: 'test' }))
+      expect(response.toJSON()).to.not.equal(response)
+    })
+
+    it('should return copy without response field', () => {
+      const response = new Response(new Request({ name: 'test', id: '123' }, { method: 'test' }))
+      expect(response.toJSON().request.response).to.be.undefined
+    })
+
+    it('should return copy without response field - JSON.stringify', () => {
+      const response = new Response(new Request({ name: 'test', id: '123' }, { method: 'test' }))
+      expect(JSON.parse(JSON.stringify(response)).request.response).to.be.undefined
     })
   })
 })
