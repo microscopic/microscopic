@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const fs = require('fs')
+const path = require('path')
+
+const argv = require('yargs').argv
+const glob = require('glob')
+const yaml = require('js-yaml')
+const cwd = process.cwd()
+
+const config = getConfig()
+
+const Microscopic = require('microscopic');
+const microscopic = new Microscopic(config.global)
+
+const service = microscopic.createService(config.name, config)
+
+addMethods(service, config)
+  .then((service) => addPlugins(service, config))
+  .then((service) => service.start())
+
+function addMethods (service, config) {
+  return new Promise((resolve, reject) => {
+    const pattern = getFullPath(config.methods || 'methods/**/*.js')
+
+    glob(pattern, (error, files) => {
+      if (error) {
+        reject(error)
+
+        return
+      }
+      for (const file of files) {
+        service.addMethod(require(file))
+      }
+
+      resolve(service)
+    })
+  })
+}
+
+function addPlugins (service, config) {
+  return new Promise((resolve) => {
+    const plugins = config.plugins
+
+    if (!plugins) {
+      resolve(service)
+
+      return
+    }
+
+    for (const plugin of plugins) {
+      const normalizedPlugin = normalizePlugin(plugin)
+
+      service.register(require(normalizedPlugin.name), normalizedPlugin.options)
+    }
+
+    resolve(service)
+  })
+
+  function normalizePlugin (plugin) {
+    if (typeof plugin === 'string') {
+      plugin = { [plugin]: {} }
+    }
+
+    const pluginName = Object.keys(plugin)[ 0 ]
+    const pluginOptions = plugin[ pluginName ]
+
+    return {
+      name: pluginName,
+      options: pluginOptions
+    }
+  }
+}
+
+function getConfig () {
+  const configServicePath = argv.config || 'service.yml'
+
+  return yaml.safeLoad(fs.readFileSync(getFullPath(configServicePath), 'utf8'))
+}
+
+function getFullPath (p) {
+  return path.normalize(path.join(cwd, p))
+}

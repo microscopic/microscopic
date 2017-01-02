@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "",
   "main": "lib/index.js",
+  "bin": {
+    "microscopic-runner": "./bin/microscopic-runner"
+  },
   "scripts": {
     "lint": "standard",
     "test": "istanbul cover _mocha test/ -- --recursive"
@@ -28,9 +31,12 @@
     ]
   },
   "dependencies": {
+    "glob": "^7.1.1",
+    "js-yaml": "^3.7.0",
     "microscopic-etcd-registry": "microscopic/microscopic-etcd-registry",
-    "microscopic-utils": "microscopic/microscopic-utils",
+    "microscopic-load-balancer": "microscopic/microscopic-load-balancer",
     "microscopic-transport": "microscopic/microscopic-transport",
-    "microscopic-load-balancer": "microscopic/microscopic-load-balancer"
+    "microscopic-utils": "microscopic/microscopic-utils",
+    "yargs": "^6.6.0"
   }
 }
